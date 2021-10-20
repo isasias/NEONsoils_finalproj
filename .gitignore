@@ -1,0 +1,11 @@
+## Do not track csv files 
+
+Data/
+
+## R project stuff
+
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Final_project.Rproj

@@ -31,3 +31,28 @@ unique(DailyCO2$siteID)
 
 ggplot(data = DailyCO2)+
   geom_path(aes(JulianDay, dailymean, color = siteID))
+
+####Plot sites separately ####
+
+# later we can include nutrient data to this graphs so we can correlate nutrient concentration with CO2
+
+# count the number of observations per site
+Sites <- DailyCO2%>%
+  count(siteID)
+
+st <- Sites$siteID
+
+# graphing with a for loop 
+
+for(i in 1:length(st)) { 
+  sub <- DailyCO2 %>% #subset the data
+    filter(siteID == st[i])
+  fig <- ggplot(data = sub,
+                mapping = aes(x = JulianDay, y = dailymean)) +
+    geom_path(color = "green")
+  ggsave(filename = paste0("Co2plots/", st[i],"_DailyCO2_concentration.jpg"),
+         fig,
+         height = 4,
+         width = 4,
+         units = "in")
+}

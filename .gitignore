@@ -2,6 +2,9 @@
 
 Data/
 
+## Do not track plots 
+Co2plots/
+
 ## R project stuff
 
 .Rproj.user

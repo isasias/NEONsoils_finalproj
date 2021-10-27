@@ -19,79 +19,60 @@ SoilCO2conc <- loadByProduct(dpID = "DP1.00095.001",
                              timeIndex = "30",
                              token = NEON_token)
 
-#USE THIS CODE IN CASE IT IS NECESSARY TO REDUCE THE STORAGE SPACE
-# SCC1 <- loadByProduct(dpID = "DP1.00095.001", 
-#                       site = c("UNDE", "NIWO"),
-#                       startdate = "2019-06", enddate = "2019-10",
-#                       timeIndex = "30")
-# SCC2 <- loadByProduct(dpID = "DP1.00095.001", 
-#                       site = c("JERC", "DELA","DCFS"),
-#                       startdate = "2019-07", enddate = "2019-08",
-#                       timeIndex = "30")
-# SCC3 <- loadByProduct(dpID = "DP1.00095.001", 
-#                       site = c("KONA", "WREF"),
-#                       startdate = "2019-06", enddate = "2019-07",
-#                       timeIndex = "30")
-# SCC4 <- loadByProduct(dpID = "DP1.00095.001", 
-#                       site = c("KONA", "WREF","DCFS"),
-#                       startdate = "2019-10", enddate = "2019-10",
-#                       timeIndex = "30")
-# SCC5 <- loadByProduct(dpID = "DP1.00095.001", 
-#                       site = "BONA",
-#                       startdate = "2019-08", enddate = "2019-09",
-#                       timeIndex = "30")
-
 list2env(SoilCO2conc, .GlobalEnv)
 View(SCO2C_30_minute)
 
 ### Data Filtering ####
 
-unique(SCO2C_30_minute$siteID)
 
+SCO2_filtered <- SCO2C_30_minute %>%
+  filter(!is.na(soilCO2concentrationMean))
 
-# UNDE and NIWO does not need date filtering 
+SCO2_filtered$JulianDay <- yday(SCO2_filtered$startDateTime)  
 
-SCO2_UN <- SCO2C_30_minute %>%
-  filter(siteID == c("UNDE", "NIWO")) %>%
-  separate(startDateTime, c(NA, "Month", "Date", "Hour")) ## This allows to filter by months since nutrient data does not have all the months
-unique(SCO2_UN$siteID)
+DailyCO2 <- SCO2_filtered %>%
+  group_by(siteID,JulianDay)%>%
+  summarise(dailymean = mean(soilCO2concentrationMean))
 
-# JERC DELA and DCFS July and August 
-
-SCO2_JDD <- SCO2C_30_minute %>% 
-  filter(siteID == c("JERC", "DELA", "DCFS")) %>%
-  separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
-  filter(Month == c("07","08"))
-
-# DCFS October
-SCO2_DC <- SCO2C_30_minute %>% 
-  filter(siteID == "DCFS") %>%
-  separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
-  filter(Month == "10")
-
-unique(SCO2_DC$Month)
-
-# KONA and WREF June July October
-
-SCO2_KW <- SCO2C_30_minute %>% 
-  filter(siteID == c("KONA", "WREF")) %>%
-  separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
-  filter(Month == c("06","07", "10"))
-
-# BONA August September
-
-SCO2_BO <- SCO2C_30_minute %>% 
-  filter(siteID == "BONA") %>%
-  separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
-  filter(Month == c("08", "09"))
-
-# Join all filtered data to one table 
-
-SCO2filtered <- rbind(SCO2_UN, SCO2_KW, SCO2_JDD, SCO2_DC, SCO2_BO)
+#   separate(startDateTime, c(NA, "Month", "Date", "Hour")) ## This allows to filter by months since nutrient data does not have all the months
+# unique(SCO2_UN$siteID)
+# 
+# # JERC DELA and DCFS July and August 
+# 
+# SCO2_JDD <- SCO2C_30_minute %>% 
+#   filter(siteID == c("JERC", "DELA", "DCFS")) %>%
+#   separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
+#   filter(Month == c("07","08"))
+# 
+# # DCFS October
+# SCO2_DC <- SCO2C_30_minute %>% 
+#   filter(siteID == "DCFS") %>%
+#   separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
+#   filter(Month == "10")
+# 
+# unique(SCO2_DC$Month)
+# 
+# # KONA and WREF June July October
+# 
+# SCO2_KW <- SCO2C_30_minute %>% 
+#   filter(siteID == c("KONA", "WREF")) %>%
+#   separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
+#   filter(Month == c("06","07", "10"))
+# 
+# # BONA August September
+# 
+# SCO2_BO <- SCO2C_30_minute %>% 
+#   filter(siteID == "BONA") %>%
+#   separate(startDateTime, c(NA, "Month", "Date", "Hour")) %>%
+#   filter(Month == c("08", "09"))
+# 
+# # Join all filtered data to one table 
+# 
+# SCO2filtered <- rbind(SCO2_UN, SCO2_KW, SCO2_JDD, SCO2_DC, SCO2_BO)
 
 # Save data frame into csv to use in later transcripts as well as other elements from the list
 
-write.csv(SCO2filtered, file = "SoilCO2_filtered.csv")
+write.csv(DailyCO2, file = "DailySoilCO2_filtered.csv")
 write.csv(variables_00095, file = "variables_00095.csv")
 write.csv(sensor_positions_00095, file = "sensor_positions_00095.csv")
 write.csv(readme_00095, file = "readme_00095.csv")

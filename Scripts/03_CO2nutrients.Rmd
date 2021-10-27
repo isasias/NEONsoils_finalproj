@@ -1,0 +1,76 @@
+---
+title: "NEON soil data"
+author: "Isabel Siles Asaff and Bethany Avera"
+date: "10/26/2021"
+output: html_document
+---
+## Libraries
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+```
+
+## Import filtered data 
+
+```{r}
+# Soil CO2
+SoilCO2 <- read.csv(file = "Data/DailySoilCO2_filtered.csv")
+
+#Soil nutrients 
+Soilnut <- read.csv(file = "Data/totalsoildata.csv")
+
+```
+
+### Summarize soil nutrients by mean
+
+```{r}
+Dailynut <- Soilnut %>%
+  group_by(siteID,JulianDay)%>%
+  summarise(SOCmean = mean(organicCPercent, na.rm = TRUE), Nmean = mean(nitrogenPercent, na.rm = TRUE))
+```
+
+# Graphing Soil CO2 and nutrients separately by site 
+
+### Using a for loop
+In order to create the for loop, first we need to count the observations per site and later create a vector with the number or sites 
+
+```{r}
+Sites <- SoilCO2%>%
+  count(siteID)
+
+#new vector created for the for loop
+st <- Sites$siteID
+```
+
+#### Merging nutrient and CO2 data in a single graph
+
+```{r}
+MergeSoil <- left_join(SoilCO2,Dailynut)
+
+# Create scale for soil nutrient data
+
+CO2max <- tapply(MergeSoil$dailymean, MergeSoil$siteID, max)
+Nmax <- tapply(MergeSoil$Nmean, MergeSoil$siteID, max, na.rm = TRUE)
+
+coeff <- data.frame(Sites = st, coefficient = CO2max/Nmax)
+
+ 
+for(i in 1:length(st)) { 
+  sub <- MergeSoil %>% #subset the data
+    filter(siteID == st[i])
+  fig <- ggplot(data = sub, aes(x = JulianDay)) +
+    geom_path(mapping = aes(y= dailymean), size = 2,  color = "forestgreen") +
+    geom_bar(fill = "orange", mapping = aes(y= Nmean*coeff), stat = "identity") +
+    scale_y_continuous(name = "Daily CO2 soil concentration (ppm)", sec.axis = sec_axis(~.*coeff, name = "Nitrogen percent in soil")) 
+  ggsave(filename = paste0("Co2nut_graphs/", st[i],"_DailyCO2_concentration.jpg"),
+         fig,
+         height = 4,
+         width = 4,
+         units = "in")
+}
+# 
+```
+

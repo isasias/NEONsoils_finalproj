@@ -18,19 +18,22 @@ SoilCO2 <- SoilCO2 %>%
   filter(!is.na(soilCO2concentrationMean))
 
 # add julian day 
-SoilCO2$JulianDay <- yday(SoilCO2$endDateTime)
+#SoilCO2$JulianDay <- yday(SoilCO2$endDateTime)
+
+# Save as csv
+
 
 DailyCO2 <- SoilCO2 %>%
   group_by(siteID,JulianDay)%>%
   summarise(dailymean = mean(soilCO2concentrationMean))
 
 unique(DailyCO2$siteID)
-
+write.csv(DailyCO2, file = "SoilCO2_daily.csv")
 
 #### Plot data by site ####
 
 ggplot(data = DailyCO2)+
-  geom_path(aes(JulianDay, dailymean, color = siteID))
+  geom_line(aes(x = JulianDay, y= dailymean, color = siteID), na.rm = TRUE)
 
 ####Plot sites separately ####
 
